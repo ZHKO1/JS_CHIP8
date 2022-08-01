@@ -1,4 +1,4 @@
-const UNIT = 8;
+const UNIT = 5;
 
 let Display = {
   $container: null,

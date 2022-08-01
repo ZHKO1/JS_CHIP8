@@ -13,11 +13,11 @@ const TEST_FILE_ARRAY = [
 const CLOCK_SPEED = 700;
 const TIMER_SPEED = 60;
 
-const INNERDIGITS_START = 0x050;
+const INNERDIGITS_START = 0x000;
 const INNERDIGITS_MAX = 0x1FF;
 const INNERDIGITS = [
   0xF0, 0x90, 0x90, 0x90, 0xF0,
-  0x20, 0x60, 0x90, 0x90, 0xF0,
+  0x20, 0x60, 0x20, 0x20, 0x70,
   0xF0, 0x10, 0xF0, 0x80, 0xF0,
   0xF0, 0x10, 0xF0, 0x10, 0xF0,
   0x90, 0x90, 0xF0, 0x10, 0x10,
@@ -36,9 +36,13 @@ const INNERDIGITS = [
 
 const MEMORY_START = 0x200;
 
+// 记录
+let PauseFlag = false;
+let StepCycles = 0;
+
+// 硬件
 let Delay_Timer = 0;
 let Sound_Timer = 0;
-
 
 let Program_Counter = MEMORY_START;
 
@@ -52,7 +56,6 @@ let FileBufferArray = null;
 let Display = null;
 let Keyboard = null;
 
-
 let CPU = {
   init(display, keyboard) {
     Display = display;
@@ -62,28 +65,41 @@ let CPU = {
     FileBufferArray = array;
   },
   async run() {
-    let cycle = 0;
-    while (true) {
-      await this.step(Program_Counter);
-      Program_Counter = Program_Counter + 2;
-      await clock_frame();
-      cycle += 1;
-      // if( cycle * 1000 / CLOCK_SPEED >= 1000 / TIMER_SPEED) 
-      if (cycle * TIMER_SPEED >= CLOCK_SPEED) {
-        Delay_Timer && (Delay_Timer -= 1);
-        if (Sound_Timer) {
-          Sound_Timer -= 1;
-          !Sound_Timer && 1; // TODO 声音 
-        };
-      }
+    PauseFlag = false;
+    let running = true;
+    while (running) {
+      await this.next();
+      running = await clock_frame();
     }
-
     function clock_frame() {
       return new Promise((next) => {
-        setTimeout(() => {
-          next();
-        }, 1000 / CLOCK_SPEED);
+        if (PauseFlag) {
+          next(false);
+        } else {
+          setTimeout(() => {
+            next(true);
+          }, 1000 / CLOCK_SPEED);
+        }
       });
+    }
+  },
+  stop() {
+    PauseFlag = true;
+  },
+  async next() {
+    await this.step(Program_Counter);
+    Program_Counter = Program_Counter + 2;
+    StepCycles += 1;
+    // if( StepCycles * 1000 / CLOCK_SPEED >= 1000 / TIMER_SPEED) 
+    if (StepCycles * TIMER_SPEED >= CLOCK_SPEED) {
+      StepCycles = 0;
+      if (Delay_Timer) {
+        Delay_Timer -= 1
+      }
+      if (Sound_Timer) {
+        Sound_Timer -= 1;
+        !Sound_Timer && 1; // TODO 声音 
+      };
     }
   },
   async step(memory_index) {
@@ -128,6 +144,13 @@ let CPU = {
   },
   async excute(type, param) {
     await Instruction[type].done(...param);
+  },
+  getRegister(){
+    return {
+      V_Array,
+      Register_I,
+      Program_Counter
+    }
   }
 }
 
@@ -155,7 +178,7 @@ let Instruction = {
     },
     done() {
       let address = Stack.pop();
-      Program_Counter = address - 2;
+      Program_Counter = address;
     },
     msg: "RET"
   },
@@ -371,7 +394,7 @@ let Instruction = {
         V_Array[0xF] = 0;
       }
       V_Array[X] = (V_Array[X] - V_Array[Y]);
-      V_Array[X] = V_Array[X] & 0xFF ;
+      V_Array[X] = V_Array[X] & 0xFF;
     },
     msg: "SUB Vx, Vy"
   },
@@ -626,7 +649,7 @@ let Instruction = {
       }
     },
     done(X) {
-      Register_I = (Register_I + V_Array[X]) & 0xFF;
+      Register_I = (Register_I + V_Array[X]) & 0xFFFF;
     },
     msg: "ADD I, Vx"
   },
@@ -758,17 +781,17 @@ function to0X(num) {
   return pre + num.toString(16)
 }
 
-function eq(code, index, value){
-  if(index == 4){
+function eq(code, index, value) {
+  if (index == 4) {
     return (code & 0xF) == value
   }
-  if(index == 3){
+  if (index == 3) {
     return ((code & 0xF0) >> 4) == value
   }
-  if(index == 2){
+  if (index == 2) {
     return ((code & 0xF00) >> 8) == value
   }
-  if(index == 1){
+  if (index == 1) {
     return ((code & 0xF000) >> 12) == value
   }
 }

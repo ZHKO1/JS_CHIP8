@@ -1,14 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <style>
+    #log {
+      display: flex;
+      height: auto;
+    }
+    #Instruction {
+      flex: 1;
+    }
+    #V0F {
+      flex: 1;
+    }
+  </style>
 </head>
+
 <body>
   <button id="choose">选择ROM</button>
+  <button id="STOP">STOP</button>
+  <button id="RUN">RUN</button>
+  <button id="STEP">STEP</button>
   <div id="chip8_container"></div>
+  <div id="log">
+    <div id="Instruction"></div>
+    <div id="V0F">
+      <div>V0 <span id="V0"></span></div>
+      <div>V1 <span id="V1"></span></div>
+      <div>V2 <span id="V2"></span></div>
+      <div>V3 <span id="V3"></span></div>
+      <div>V4 <span id="V4"></span></div>
+      <div>V5 <span id="V5"></span></div>
+      <div>V6 <span id="V6"></span></div>
+      <div>V7 <span id="V7"></span></div>
+      <div>V8 <span id="V8"></span></div>
+      <div>V9 <span id="V9"></span></div>
+      <div>V10 <span id="V10"></span></div>
+      <div>V11 <span id="V11"></span></div>
+      <div>V12 <span id="V12"></span></div>
+      <div>V13 <span id="V13"></span></div>
+      <div>V14 <span id="V14"></span></div>
+      <div>V15 <span id="V15"></span></div>
+      <div>I <span id="I"></span></div>
+      <div>PC <span id="PC"></span></div>
+    </div>
+  </div>
   <script type="module" src="./index.js"></script>
 </body>
+
 </html>
