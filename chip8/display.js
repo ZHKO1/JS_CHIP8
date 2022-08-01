@@ -18,22 +18,17 @@ let Display = {
     this.ctx = this.$canvas.getContext("2d");
     this.ctx.fillStyle = "blue";
     this.pixelArray = new Array(this.width * this.height).fill(0);
-    /*
-    this.pixelArray[10 + 10 * 64] = 1;
-    this.pixelArray[10 + 11 * 64] = 1;
-    this.pixelArray[10 + 12 * 64] = 1;
-    */
   },
   update(array) {
     this.pixelArray = array;
   },
-  getPixelArray(){
+  getPixelArray() {
     return this.pixelArray
   },
   render() {
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
-        if ( this.pixelArray[(i - 1) * 64 + j]) {
+        if (this.pixelArray[i * 64 + j]) {
           this.ctx.fillRect(j * UNIT, i * UNIT, 1 * UNIT, 1 * UNIT);
         }
       }

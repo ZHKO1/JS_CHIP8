@@ -1,20 +1,20 @@
 const KeyboardMap = {
-  "0": "0",
+  "0": "x",
   "1": "1",
   "2": "2",
   "3": "3",
-  "4": "4",
-  "5": "5",
-  "6": "6",
-  "7": "7",
-  "8": "8",
-  "9": "9",
-  "A": "A",
-  "B": "B",
-  "C": "C",
-  "D": "D",
-  "E": "E",
-  "F": "F",
+  "4": "q",
+  "5": "w",
+  "6": "e",
+  "7": "a",
+  "8": "s",
+  "9": "d",
+  "A": "z",
+  "B": "c",
+  "C": "4",
+  "D": "r",
+  "E": "f",
+  "F": "v",
 };
 
 let isKeyDown = false;
@@ -38,8 +38,8 @@ let Keyboard = {
       }
     }
   },
-  getCurrentStatus(){
-    return [isKeyDown, paseInt(current0xKey, 16)]
+  getCurrentStatus() {
+    return [isKeyDown, parseInt(current0xKey, 16)]
   },
   waitKeyDown() {
     return new Promise((next) => {
@@ -48,10 +48,10 @@ let Keyboard = {
         for (let _0xKey in KeyboardMap) {
           if (KeyboardMap[_0xKey] == key) {
             current0xKey = _0xKey;
+            next(parseInt(current0xKey, 16));
             document.onkeydown = this.listen;
             isKeyDown = false;
             current0xKey = null;
-            next(paseInt(current0xKey, 16));
           }
         }
       };

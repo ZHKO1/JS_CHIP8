@@ -10,7 +10,7 @@ const TEST_FILE_ARRAY = [
   0x00, 0xe0, 0x00, 0xe0
 ];
 
-const CLOCK_SPEED = 700;
+const CLOCK_SPEED = 1400;
 const TIMER_SPEED = 60;
 
 const INNERDIGITS_START = 0x000;
@@ -109,7 +109,7 @@ let CPU = {
     let result = this.decode(memory_index);
     if (result) {
       let { type, param } = result;
-      console.log(`${to0X(memory_index)} tpye ${Instruction[type].msg}, ${JSON.stringify(param.map(x => to0X(x)))}`)
+      // console.log(`${to0X(memory_index)} tpye ${Instruction[type].msg}, ${JSON.stringify(param.map(x => to0X(x)))}`)
       await this.excute(type, param);
     } else {
       throw (new Error("读取不出指令"));
@@ -117,7 +117,7 @@ let CPU = {
     let index = memory_index - MEMORY_START;
     let code1 = FileBufferArray[index];
     let code2 = FileBufferArray[index + 1];
-    console.log(`${to0X(memory_index)} raw ${to0X(code1)}${to0X(code2)}`)
+    // console.log(`${to0X(memory_index)} raw ${to0X(code1)}${to0X(code2)}`)
   },
   decode(memory_index) {
     let index = memory_index - MEMORY_START;
@@ -145,7 +145,7 @@ let CPU = {
   async excute(type, param) {
     await Instruction[type].done(...param);
   },
-  getRegister(){
+  getRegister() {
     return {
       V_Array,
       Register_I,
@@ -529,21 +529,26 @@ let Instruction = {
       let Display_Y = V_Array[Y];
       var slice = Util.getBytesSlice(Register_I, N);
       var array = Display.getPixelArray();
+      let conflict = false;
       for (var j = 0; j < N; j++) {
         for (var i = 0; i < 8; i++) {
-          let from = slice[j] & Math.pow(2, 8 - i) ? 1 : 0;
-          let to_x = (Display_X + i) % Display.width;
-          let to_y = (Display_Y + j) % Display.height;
-          let to_index = to_x + (to_y - 1) * Display.width;
-          let to = array[to_index];
-          if (((from ^ to) == 0) && from) {
-            V_Array[0xF] = 1;
-          } else {
-            V_Array[0xF] = 0;
+          let newPixel = (slice[j] & Math.pow(2, 8 - i - 1)) ? 1 : 0;
+          let x = (Display_X + i) % Display.width;
+          let y = (Display_Y + j) % Display.height;
+          let index = x + y * Display.width;
+          let origin = array[index];
+          if (((origin ^ newPixel) == 0) && origin) {
+            conflict = true;
           }
-          array[to_index] = (from ^ to);
+          array[index] = (origin ^ newPixel);
         }
       }
+      if (conflict) {
+        V_Array[0xF] = 1;
+      } else {
+        V_Array[0xF] = 0;
+      }
+      Display.clear();
       Display.render();
     },
     msg: "DRW Vx, Vy, N"
@@ -559,7 +564,7 @@ let Instruction = {
     },
     done(X) {
       let [isKeyDown, current0xKey] = Keyboard.getCurrentStatus();
-      if (isKeyDown && current0xKey == V_Array[X]) {
+      if (isKeyDown && (current0xKey == V_Array[X])) {
         Program_Counter = Program_Counter + 2;
       }
     },
@@ -576,7 +581,7 @@ let Instruction = {
     },
     done(X) {
       let [isKeyDown, current0xKey] = Keyboard.getCurrentStatus();
-      if (!isKeyDown || (isKeyDown && current0xKey == V_Array[X])) {
+      if (!isKeyDown || (isKeyDown && (current0xKey !== V_Array[X]))) {
         Program_Counter = Program_Counter + 2;
       }
     },
