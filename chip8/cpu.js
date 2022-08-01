@@ -9,8 +9,8 @@ const TEST_FILE_ARRAY = [
   0xf3, 0x00, 0xe3, 0x00, 0x43, 0xe0, 0x00, 0xe0, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80,
   0x00, 0xe0, 0x00, 0xe0
 ];
-
-const CLOCK_SPEED = 1400;
+// 在1/TIMER_SPEED秒内 执行的多个指令，一定程度上页面更加流畅
+const CLOCK_NUMBER = 10;
 const TIMER_SPEED = 60;
 
 const INNERDIGITS_START = 0x000;
@@ -68,8 +68,13 @@ let CPU = {
     PauseFlag = false;
     let running = true;
     while (running) {
-      await this.next();
+      for (let i = 0; i < CLOCK_NUMBER; i++) {
+        await this.next();
+      }
+      Display.clear();
+      Display.render();
       running = await clock_frame();
+
     }
     function clock_frame() {
       return new Promise((next) => {
@@ -78,7 +83,7 @@ let CPU = {
         } else {
           setTimeout(() => {
             next(true);
-          }, 1000 / CLOCK_SPEED);
+          }, 1000 / TIMER_SPEED);
         }
       });
     }
@@ -86,12 +91,16 @@ let CPU = {
   stop() {
     PauseFlag = true;
   },
+  async manual_next() {
+    await this.next();
+    Display.clear();
+    Display.render();
+  },
   async next() {
     await this.step(Program_Counter);
     Program_Counter = Program_Counter + 2;
     StepCycles += 1;
-    // if( StepCycles * 1000 / CLOCK_SPEED >= 1000 / TIMER_SPEED) 
-    if (StepCycles * TIMER_SPEED >= CLOCK_SPEED) {
+    if(StepCycles == CLOCK_NUMBER){
       StepCycles = 0;
       if (Delay_Timer) {
         Delay_Timer -= 1
@@ -548,8 +557,6 @@ let Instruction = {
       } else {
         V_Array[0xF] = 0;
       }
-      Display.clear();
-      Display.render();
     },
     msg: "DRW Vx, Vy, N"
   },
@@ -611,6 +618,9 @@ let Instruction = {
       }
     },
     async done(X) {
+      // 避免一次性执行多个指令，突然碰到其中一个强制中断，导致此时没有绘图的情况
+      Display.clear();
+      Display.render();
       let key = await Keyboard.waitKeyDown();
       V_Array[X] = key;
     },

@@ -37,7 +37,7 @@ let Chip8 = {
     this.cpu.stop(); 
   },
   step() {
-    this.cpu.next();
+    this.cpu.manual_next();
   },
   getRegister(){
     return this.cpu.getRegister();
