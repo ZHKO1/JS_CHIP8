@@ -7,5 +7,5 @@ lerna-debug.log.*
 .idea
 .npmrc
 
-dist/
-dist/*
+web/chip8.js
+web/chip8.js.map
