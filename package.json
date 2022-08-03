@@ -1,0 +1,17 @@
+{
+  "name": "js_chip8",
+  "version": "0.0.1",
+  "description": "CHIP-8 Emulator",
+  "main": "dist/chip8.js",
+  "repository": "git@github.com:ZHKO1/JS_CHIP8.git",
+  "author": "ZHKO1 <zhko11993@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "serve": "node scripts/serve.js",
+    "watch": "node scripts/watch.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.53"
+  }
+}

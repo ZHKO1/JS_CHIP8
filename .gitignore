@@ -7,3 +7,5 @@ lerna-debug.log.*
 .idea
 .npmrc
 
+dist/
+dist/*
