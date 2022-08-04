@@ -10,8 +10,8 @@
     "build": "node scripts/build.js",
     "deploy": "node scripts/build.js && cp dist/chip8.js web/chip8.js && && cp dist/chip8.js.map web/chip8.js.map",
     "watch": "node scripts/watch.js",
-    "pretest": "cp dist/chip8.js tests/SnapShots/server/chip8.js && http-server tests/SnapShots/server/ -p 8888",
-    "test": "node tests/init.js"
+    "pretest": "cp dist/chip8.js tests/SnapShots/server/chip8.js",
+    "test": "node tests/SnapShots/init.js"
   },
   "devDependencies": {
     "esbuild": "^0.14.53"
