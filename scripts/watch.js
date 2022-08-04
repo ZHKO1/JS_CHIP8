@@ -1,6 +1,6 @@
 require('esbuild').build({
   entryPoints: ['src/index.js'],
-  outfile: 'web/chip8.js',
+  outfile: 'dist/chip8.js',
   bundle: true,
   watch: {
     onRebuild(error, result) {

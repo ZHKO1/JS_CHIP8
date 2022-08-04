@@ -9,3 +9,6 @@ lerna-debug.log.*
 
 web/chip8.js
 web/chip8.js.map
+
+dist/
+dist/*

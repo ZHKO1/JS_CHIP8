@@ -4,5 +4,5 @@ require('esbuild').build({
   minify: true,
   sourcemap: true,
   format: "esm",
-  outfile: 'web/chip8.js',
+  outfile: 'dist/chip8.js',
 }).catch(() => process.exit(1))
