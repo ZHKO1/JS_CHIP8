@@ -8,8 +8,9 @@
   "license": "MIT",
   "scripts": {
     "build": "node scripts/build.js",
-    "deploy": "node scripts/deploy.js",
+    "deploy": "node scripts/build.js && cp dist/chip8.js web/chip8.js && && cp dist/chip8.js.map web/chip8.js.map",
     "watch": "node scripts/watch.js",
+    "pretest": "cp dist/chip8.js tests/SnapShots/server/chip8.js && http-server tests/SnapShots/server/ -p 8888",
     "test": "node tests/init.js"
   },
   "devDependencies": {
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "chai": "^4.3.6",
+    "http-server": "^14.1.1",
     "mocha": "^10.0.0",
     "pixelmatch": "^5.3.0",
     "pngjs": "^6.0.0",
