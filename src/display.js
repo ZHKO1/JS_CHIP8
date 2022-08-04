@@ -13,7 +13,7 @@ let Display = {
     this.$canvas.width = this.width * UNIT;
     this.$canvas.height = this.height * UNIT;
     this.$canvas.id = "chip8";
-    this.$canvas.style = "border: 1px solid red";
+    // this.$canvas.style = "border: 1px solid red";
     this.$container.appendChild(this.$canvas);
     this.ctx = this.$canvas.getContext("2d");
     this.ctx.fillStyle = "blue";
