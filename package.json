@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "node scripts/build.js",
-    "deploy": "node scripts/build.js && cp dist/chip8.js web/chip8.js && && cp dist/chip8.js.map web/chip8.js.map",
+    "deploy": "node scripts/build.js && cp dist/chip8.js web/chip8.js && cp dist/chip8.js.map web/chip8.js.map",
     "watch": "node scripts/watch.js",
     "pretest": "cp dist/chip8.js tests/SnapShots/chip8.js",
     "test": "mocha tests/**/*.test.js",
