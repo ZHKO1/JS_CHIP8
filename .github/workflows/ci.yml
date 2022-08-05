@@ -19,4 +19,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: check diff
-          path: tests/COMPAREDIFF
+          path: tests/SnapShots/COMPAREDIFF
