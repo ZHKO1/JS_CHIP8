@@ -13,5 +13,10 @@ web/chip8.js.map
 dist/
 dist/*
 
-tests/SnapShots/server/chip8.js
-tests/SnapShots/server/chip8.js.map
+tests/SnapShots/chip8.js
+tests/SnapShots/chip8.js.map
+
+tests/SnapShots/SCREENSHOTS/
+tests/SnapShots/SCREENSHOTS/*
+tests/SnapShots/COMPAREDIFF/
+tests/SnapShots/COMPAREDIFF/*
