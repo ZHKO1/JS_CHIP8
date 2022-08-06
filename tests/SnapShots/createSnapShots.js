@@ -1,14 +1,12 @@
-const puppeteer = require('puppeteer');
-const PNG = require('pngjs').PNG;
-const fs = require('fs');
-const HttpServer = require('http-server').HttpServer;
-const { takeScreenshot } = require('./util.js');
-const { SCREENSHOTS_GOLDEN, SCREENSHOTS, ROMARRAY } = require('./config.js');
+import puppeteer from 'puppeteer';
+import { HTTPServer as HttpServer } from 'http-server';
+import { takeScreenshot } from './util.js'
+import { SCREENSHOTS_GOLDEN, SCREENSHOTS, ROMARRAY } from './config.js'
 
 init();
 
 async function init() {
-  let browser, page;
+  let httpServer, browser, page;
   browser = await puppeteer.launch();
   httpServer = new HttpServer({
     root: process.cwd()

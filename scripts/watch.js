@@ -1,4 +1,6 @@
-require('esbuild').build({
+import esbuild from 'esbuild';
+
+esbuild.build({
   entryPoints: ['src/index.js'],
   outfile: 'dist/chip8.js',
   bundle: true,

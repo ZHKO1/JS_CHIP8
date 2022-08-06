@@ -1,12 +1,10 @@
-const puppeteer = require('puppeteer');
-const expect = require('chai').expect;
-const PNG = require('pngjs').PNG;
-const fs = require('fs');
-const HttpServer = require('http-server').HTTPServer;
-const { SCREENSHOTS_GOLDEN, SCREENSHOTS, COMPAREDIFF, ROMARRAY } = require('./config.js');
-const { takeScreenshot, compareScreenshot } = require('./util.js');
-
-
+import puppeteer from 'puppeteer';
+import { expect } from 'chai';
+import { PNG } from 'pngjs';
+import fs from 'fs';
+import { HTTPServer as HttpServer } from 'http-server';
+import { takeScreenshot, compareScreenshot } from './util.js'
+import { SCREENSHOTS_GOLDEN, SCREENSHOTS, COMPAREDIFF, ROMARRAY } from './config.js'
 
 describe('👀 SCREENSHOTS are correct', function () {
   let httpServer, browser, page;

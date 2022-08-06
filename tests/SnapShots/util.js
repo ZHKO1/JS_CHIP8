@@ -1,6 +1,6 @@
-const fs = require('fs');
-const PNG = require('pngjs').PNG;
-const pixelmatch = require('pixelmatch');
+import { PNG } from 'pngjs';
+import fs from 'fs';
+import pixelmatch from 'pixelmatch';
 
 async function takeScreenshot(page, fileName, path) {
   await page.goto(`http://127.0.0.1:3000/tests/SnapShots/test.html?name=${fileName}`);
@@ -35,7 +35,7 @@ async function compareScreenshot(path_golden, path, fileName) {
   });
 }
 
-module.exports = {
+export {
   takeScreenshot,
   compareScreenshot,
 };

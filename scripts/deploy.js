@@ -1,6 +1,7 @@
-const fs = require('fs');
+import esbuild from 'esbuild';
+import fs from 'fs';
 
-require('esbuild').build({
+esbuild.build({
   entryPoints: ['src/index.js'],
   bundle: true,
   minify: true,
