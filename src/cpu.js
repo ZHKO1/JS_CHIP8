@@ -1,14 +1,3 @@
-const TEST_FILE_ARRAY = [
-  0x00, 0xe0, 0xa2, 0x2a, 0x60, 0x0c, 0x61, 0x08, 0xd0, 0x1f, 0x70, 0x09, 0xa2, 0x39, 0xd0, 0x1f,
-  0xa2, 0x48, 0x70, 0x08, 0xd0, 0x1f, 0x70, 0x04, 0xa2, 0x57, 0xd0, 0x1f, 0x70, 0x08, 0xa2, 0x66,
-  0xd0, 0x1f, 0x70, 0x08, 0xa2, 0x75, 0xd0, 0x1f, 0x12, 0x28, 0xff, 0x00, 0xff, 0x00, 0x3c, 0x00,
-  0x3c, 0x00, 0x3c, 0x00, 0x3c, 0x00, 0xff, 0x00, 0xff, 0xff, 0x00, 0xff, 0x00, 0x38, 0x00, 0x3f,
-  0x00, 0x3f, 0x00, 0x38, 0x00, 0xff, 0x00, 0xff, 0x80, 0x00, 0xe0, 0x00, 0xe0, 0x00, 0x80, 0x00,
-  0x80, 0x00, 0xe0, 0x00, 0xe0, 0x00, 0x80, 0xf8, 0x00, 0xfc, 0x00, 0x3e, 0x00, 0x3f, 0x00, 0x3b,
-  0x00, 0x39, 0x00, 0xf8, 0x00, 0xf8, 0x03, 0x00, 0x07, 0x00, 0x0f, 0x00, 0xbf, 0x00, 0xfb, 0x00,
-  0xf3, 0x00, 0xe3, 0x00, 0x43, 0xe0, 0x00, 0xe0, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80, 0x00, 0x80,
-  0x00, 0xe0, 0x00, 0xe0
-];
 // 在1/TIMER_SPEED秒内 执行的多个指令，一定程度上页面更加流畅
 const CLOCK_NUMBER = 10;
 const TIMER_SPEED = 60;
@@ -36,49 +25,42 @@ const INNERDIGITS = [
 
 const MEMORY_START = 0x200;
 
-// 记录
-let PauseFlag = false;
-let StepCycles = 0;
-
-// 硬件
-let Delay_Timer = 0;
-let Sound_Timer = 0;
-
-let Program_Counter = MEMORY_START;
-
-let V_Array = new Array(16).fill(0);
-
-let Register_I = 0;
-
-let Stack = [];
-
-let FileBufferArray = null;
-let Display = null;
-let Keyboard = null;
-
 let CPU = {
+  PauseFlag: false,
+  StepCycles: 0,
+  // 硬件
+  Delay_Timer: 0,
+  Sound_Timer: 0,
+  Stack: [],
+  Program_Counter: MEMORY_START,
+  Register_I: 0,
+  V_Array: new Array(16).fill(0),
+  Display: null,
+  Keyboard: null,
+  FileBufferArray: null,
   init(display, keyboard) {
-    Display = display;
-    Keyboard = keyboard;
+    this.Display = display;
+    this.Keyboard = keyboard;
   },
   read(array) {
-    FileBufferArray = array;
+    this.FileBufferArray = array;
   },
   async run() {
-    PauseFlag = false;
+    let self = this;
+    this.PauseFlag = false;
     let running = true;
     while (running) {
       for (let i = 0; i < CLOCK_NUMBER; i++) {
         await this.next();
       }
-      Display.clear();
-      Display.render();
+      this.Display.clear();
+      this.Display.render();
       running = await clock_frame();
 
     }
     function clock_frame() {
       return new Promise((next) => {
-        if (PauseFlag) {
+        if (self.PauseFlag) {
           next(false);
         } else {
           setTimeout(() => {
@@ -89,30 +71,39 @@ let CPU = {
     }
   },
   stop() {
-    PauseFlag = true;
+    this.PauseFlag = true;
+  },
+  reset() {
+    this.Delay_Timer = 0;
+    this.Sound_Timer = 0;
+    this.Stack = [];
+    this.Program_Counter = MEMORY_START;
+    this.Register_I = 0;
+    this.V_Array = new Array(16).fill(0);
   },
   async manual_next() {
     await this.next();
-    Display.clear();
-    Display.render();
+    this.Display.clear();
+    this.Display.render();
   },
   async next() {
-    await this.step(Program_Counter);
-    Program_Counter = Program_Counter + 2;
-    StepCycles += 1;
-    if(StepCycles == CLOCK_NUMBER){
-      StepCycles = 0;
-      if (Delay_Timer) {
-        Delay_Timer -= 1
+    await this.step();
+    this.Program_Counter += 2;
+    this.StepCycles += 1;
+    if (this.StepCycles == CLOCK_NUMBER) {
+      this.StepCycles = 0;
+      if (this.Delay_Timer) {
+        this.Delay_Timer -= 1
       }
-      if (Sound_Timer) {
-        Sound_Timer -= 1;
-        !Sound_Timer && 1; // TODO 声音 
+      if (this.Sound_Timer) {
+        this.Sound_Timer -= 1;
+        !this.Sound_Timer && 1; // TODO 声音 
       };
     }
   },
-  async step(memory_index) {
-    if (memory_index > MEMORY_START + FileBufferArray.length - 1) {
+  async step() {
+    let memory_index = this.Program_Counter;
+    if (memory_index > MEMORY_START + this.FileBufferArray.length - 1) {
       return false;
     }
     let result = this.decode(memory_index);
@@ -124,14 +115,14 @@ let CPU = {
       throw (new Error("读取不出指令"));
     }
     let index = memory_index - MEMORY_START;
-    let code1 = FileBufferArray[index];
-    let code2 = FileBufferArray[index + 1];
+    let code1 = this.FileBufferArray[index];
+    let code2 = this.FileBufferArray[index + 1];
     // console.log(`${to0X(memory_index)} raw ${to0X(code1)}${to0X(code2)}`)
   },
   decode(memory_index) {
     let index = memory_index - MEMORY_START;
-    let code1 = FileBufferArray[index];
-    let code2 = FileBufferArray[index + 1];
+    let code1 = this.FileBufferArray[index];
+    let code2 = this.FileBufferArray[index + 1];
     let code1code2 = (code1 << 8) + code2;
     return this.matchInstruction(code1code2);
   },
@@ -152,13 +143,13 @@ let CPU = {
     return result;
   },
   async excute(type, param) {
-    await Instruction[type].done(...param);
+    await Instruction[type].done.apply(this, param);
   },
   getRegister() {
     return {
-      V_Array,
-      Register_I,
-      Program_Counter
+      V_Array: this.V_Array,
+      Register_I: this.Register_I,
+      Program_Counter: this.Program_Counter
     }
   }
 }
@@ -173,7 +164,7 @@ let Instruction = {
       }
     },
     done() {
-      Display.clear();
+      this.Display.clear();
     },
     msg: "CLS"
   },
@@ -186,8 +177,8 @@ let Instruction = {
       }
     },
     done() {
-      let address = Stack.pop();
-      Program_Counter = address;
+      let address = this.Stack.pop();
+      this.Program_Counter = address;
     },
     msg: "RET"
   },
@@ -201,7 +192,7 @@ let Instruction = {
       }
     },
     done(NNN) {
-      Program_Counter = NNN - 2;
+      this.Program_Counter = NNN - 2;
     },
     msg: "JP addr"
   },
@@ -215,9 +206,9 @@ let Instruction = {
       }
     },
     done(NNN) {
-      var address = Program_Counter;
-      Stack.push(address);
-      Program_Counter = NNN - 2;
+      var address = this.Program_Counter;
+      this.Stack.push(address);
+      this.Program_Counter = NNN - 2;
     },
     msg: "CALL addr"
   },
@@ -232,9 +223,9 @@ let Instruction = {
       }
     },
     done(X, KK) {
-      let Vx = V_Array[X];
+      let Vx = this.V_Array[X];
       if (Vx === KK) {
-        Program_Counter = Program_Counter + 2;
+        this.Program_Counter += 2;
       }
     },
     msg: "SE Vx, byte"
@@ -250,9 +241,9 @@ let Instruction = {
       }
     },
     done(X, KK) {
-      let Vx = V_Array[X];
+      let Vx = this.V_Array[X];
       if (Vx !== KK) {
-        Program_Counter = Program_Counter + 2;
+        this.Program_Counter += 2;
       }
     },
     msg: "SNE Vx, byte"
@@ -268,10 +259,10 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      let Vx = V_Array[X];
-      let Vy = V_Array[Y];
+      let Vx = this.V_Array[X];
+      let Vy = this.V_Array[Y];
       if (Vx === Vy) {
-        Program_Counter = Program_Counter + 2;
+        this.Program_Counter += 2;
       }
     },
     msg: "SE Vx, Vy"
@@ -287,7 +278,7 @@ let Instruction = {
       }
     },
     done(X, KK) {
-      V_Array[X] = KK;
+      this.V_Array[X] = KK;
     },
     msg: "LD Vx, byte"
   },
@@ -302,7 +293,7 @@ let Instruction = {
       }
     },
     done(X, KK) {
-      V_Array[X] = (V_Array[X] + KK) & 0xFF;
+      this.V_Array[X] = (this.V_Array[X] + KK) & 0xFF;
     },
     msg: "ADD Vx, byte"
   },
@@ -317,7 +308,7 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      V_Array[X] = V_Array[Y];
+      this.V_Array[X] = this.V_Array[Y];
     },
     msg: "LD Vx, Vy"
   },
@@ -332,7 +323,7 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      V_Array[X] = V_Array[X] | V_Array[Y];
+      this.V_Array[X] = this.V_Array[X] | this.V_Array[Y];
     },
     msg: "OR Vx, Vy"
   },
@@ -347,7 +338,7 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      V_Array[X] = V_Array[X] & V_Array[Y];
+      this.V_Array[X] = this.V_Array[X] & this.V_Array[Y];
     },
     msg: "AND Vx, Vy"
   },
@@ -362,7 +353,7 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      V_Array[X] = V_Array[X] ^ V_Array[Y];
+      this.V_Array[X] = this.V_Array[X] ^ this.V_Array[Y];
     },
     msg: "XOR Vx, Vy"
   },
@@ -377,12 +368,12 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      if (V_Array[X] + V_Array[Y] > 0xFF) {
-        V_Array[0xF] = 1;
+      if (this.V_Array[X] + this.V_Array[Y] > 0xFF) {
+        this.V_Array[0xF] = 1;
       } else {
-        V_Array[0xF] = 0;
+        this.V_Array[0xF] = 0;
       }
-      V_Array[X] = (V_Array[X] + V_Array[Y]) & 0xFF;
+      this.V_Array[X] = (this.V_Array[X] + this.V_Array[Y]) & 0xFF;
     },
     msg: "ADD Vx, Vy"
   },
@@ -397,13 +388,13 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      if (V_Array[X] > V_Array[Y]) {
-        V_Array[0xF] = 1;
+      if (this.V_Array[X] > this.V_Array[Y]) {
+        this.V_Array[0xF] = 1;
       } else {
-        V_Array[0xF] = 0;
+        this.V_Array[0xF] = 0;
       }
-      V_Array[X] = (V_Array[X] - V_Array[Y]);
-      V_Array[X] = V_Array[X] & 0xFF;
+      this.V_Array[X] = (this.V_Array[X] - this.V_Array[Y]);
+      this.V_Array[X] = this.V_Array[X] & 0xFF;
     },
     msg: "SUB Vx, Vy"
   },
@@ -418,8 +409,8 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      V_Array[0xF] = (V_Array[X] & 0x01) ? 1 : 0;
-      V_Array[X] = V_Array[X] >> 1;
+      this.V_Array[0xF] = (this.V_Array[X] & 0x01) ? 1 : 0;
+      this.V_Array[X] = this.V_Array[X] >> 1;
     },
     msg: "SHR Vx {, Vy}"
   },
@@ -434,12 +425,12 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      if (V_Array[X] < V_Array[Y]) {
-        V_Array[0xF] = 1;
+      if (this.V_Array[X] < this.V_Array[Y]) {
+        this.V_Array[0xF] = 1;
       } else {
-        V_Array[0xF] = 0;
+        this.V_Array[0xF] = 0;
       }
-      V_Array[X] = (V_Array[Y] - V_Array[X]) & 0xFF;
+      this.V_Array[X] = (this.V_Array[Y] - this.V_Array[X]) & 0xFF;
     },
     msg: "SUBN Vx, Vy"
   },
@@ -454,8 +445,8 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      V_Array[0xF] = V_Array[X] & 0x80 ? 1 : 0;
-      V_Array[X] = (V_Array[X] << 1) & 0xFF;
+      this.V_Array[0xF] = this.V_Array[X] & 0x80 ? 1 : 0;
+      this.V_Array[X] = (this.V_Array[X] << 1) & 0xFF;
     },
     msg: "SHL Vx {, Vy}"
   },
@@ -470,10 +461,10 @@ let Instruction = {
       }
     },
     done(X, Y) {
-      let Vx = V_Array[X];
-      let Vy = V_Array[Y];
+      let Vx = this.V_Array[X];
+      let Vy = this.V_Array[Y];
       if (Vx !== Vy) {
-        Program_Counter = Program_Counter + 2;
+        this.Program_Counter += 2;
       }
     },
     msg: "SNE Vx, Vy"
@@ -488,7 +479,7 @@ let Instruction = {
       }
     },
     done(NNN) {
-      Register_I = NNN;
+      this.Register_I = NNN;
     },
     msg: "LD I, addr"
   },
@@ -502,7 +493,7 @@ let Instruction = {
       }
     },
     done(NNN) {
-      Program_Counter = V_Array[0x0] + NNN - 2;
+      this.Program_Counter = this.V_Array[0x0] + NNN - 2;
     },
     msg: "JP V0, addr"
   },
@@ -518,7 +509,7 @@ let Instruction = {
     },
     done(X, KK) {
       let random = Math.floor(Math.random() * 255);
-      V_Array[X] = random & KK;
+      this.V_Array[X] = random & KK;
     },
     msg: "RND Vx, byte"
   },
@@ -534,9 +525,24 @@ let Instruction = {
       }
     },
     done(X, Y, N) {
-      let Display_X = V_Array[X];
-      let Display_Y = V_Array[Y];
-      var slice = Util.getBytesSlice(Register_I, N);
+      let Display = this.Display;
+      let Display_X = this.V_Array[X];
+      let Display_Y = this.V_Array[Y];
+      var getBytesSlice = (start, length) => {
+        let result = new Array(length).fill(0);
+        if (start >= INNERDIGITS_START && start <= INNERDIGITS_MAX) {
+          for (let i = 0; i < length; i++) {
+            result[i] = INNERDIGITS[start - INNERDIGITS_START + i];
+          }
+        }
+        if (start >= MEMORY_START) {
+          for (let i = 0; i < length; i++) {
+            result[i] = this.FileBufferArray[start - MEMORY_START + i];
+          }
+        }
+        return result;
+      }
+      var slice = getBytesSlice(this.Register_I, N);
       var array = Display.getPixelArray();
       let conflict = false;
       for (var j = 0; j < N; j++) {
@@ -553,9 +559,9 @@ let Instruction = {
         }
       }
       if (conflict) {
-        V_Array[0xF] = 1;
+        this.V_Array[0xF] = 1;
       } else {
-        V_Array[0xF] = 0;
+        this.V_Array[0xF] = 0;
       }
     },
     msg: "DRW Vx, Vy, N"
@@ -570,9 +576,10 @@ let Instruction = {
       }
     },
     done(X) {
-      let [isKeyDown, current0xKey] = Keyboard.getCurrentStatus();
-      if (isKeyDown && (current0xKey == V_Array[X])) {
-        Program_Counter = Program_Counter + 2;
+      let Keyboard = this.Keyboard;
+      let [isKeyDown, currentKey_0x] = Keyboard.getCurrentStatus();
+      if (isKeyDown && (currentKey_0x == this.V_Array[X])) {
+        this.Program_Counter += 2;
       }
     },
     msg: "SKP Vx"
@@ -587,9 +594,10 @@ let Instruction = {
       }
     },
     done(X) {
-      let [isKeyDown, current0xKey] = Keyboard.getCurrentStatus();
-      if (!isKeyDown || (isKeyDown && (current0xKey !== V_Array[X]))) {
-        Program_Counter = Program_Counter + 2;
+      let Keyboard = this.Keyboard;
+      let [isKeyDown, currentKey_0x] = Keyboard.getCurrentStatus();
+      if (!isKeyDown || (isKeyDown && (currentKey_0x !== this.V_Array[X]))) {
+        this.Program_Counter += 2;
       }
     },
     msg: "SKNP Vx"
@@ -604,7 +612,7 @@ let Instruction = {
       }
     },
     done(X) {
-      V_Array[X] = Delay_Timer
+      this.V_Array[X] = this.Delay_Timer
     },
     msg: "LD Vx, DT"
   },
@@ -619,10 +627,10 @@ let Instruction = {
     },
     async done(X) {
       // 避免一次性执行多个指令，突然碰到其中一个强制中断，导致此时没有绘图的情况
-      Display.clear();
-      Display.render();
-      let key = await Keyboard.waitKeyDown();
-      V_Array[X] = key;
+      this.Display.clear();
+      this.Display.render();
+      let key = await this.Keyboard.waitKeyDown();
+      this.V_Array[X] = key;
     },
     msg: "LD Vx, K"
   },
@@ -636,7 +644,7 @@ let Instruction = {
       }
     },
     done(X) {
-      Delay_Timer = V_Array[X]
+      this.Delay_Timer = this.V_Array[X]
     },
     msg: "LD DT, Vx"
   },
@@ -650,7 +658,7 @@ let Instruction = {
       }
     },
     done(X) {
-      Sound_Timer = V_Array[X]
+      this.Sound_Timer = this.V_Array[X]
     },
     msg: "LD ST, Vx"
   },
@@ -664,7 +672,7 @@ let Instruction = {
       }
     },
     done(X) {
-      Register_I = (Register_I + V_Array[X]) & 0xFFFF;
+      this.Register_I = (this.Register_I + this.V_Array[X]) & 0xFFFF;
     },
     msg: "ADD I, Vx"
   },
@@ -678,8 +686,8 @@ let Instruction = {
       }
     },
     done(X) {
-      let Vx = V_Array[X];
-      Register_I = INNERDIGITS_START + Vx * 5;
+      let Vx = this.V_Array[X];
+      this.Register_I = INNERDIGITS_START + Vx * 5;
     },
     msg: "LD F, Vx"
   },
@@ -693,11 +701,11 @@ let Instruction = {
       }
     },
     done(X) {
-      let Vx = V_Array[X];
-      let index = Register_I - MEMORY_START;
-      FileBufferArray[index] = Math.floor(Vx / 100) % 10;
-      FileBufferArray[index + 1] = Math.floor(Vx / 10) % 10;
-      FileBufferArray[index + 2] = Vx % 10;
+      let Vx = this.V_Array[X];
+      let index = this.Register_I - MEMORY_START;
+      this.FileBufferArray[index] = Math.floor(Vx / 100) % 10;
+      this.FileBufferArray[index + 1] = Math.floor(Vx / 10) % 10;
+      this.FileBufferArray[index + 2] = Vx % 10;
     },
     msg: "LD B, Vx"
   },
@@ -711,10 +719,10 @@ let Instruction = {
       }
     },
     done(X) {
-      let index = Register_I - MEMORY_START;
+      let index = this.Register_I - MEMORY_START;
       for (let i = 0; i <= X; i++) {
-        let Vi = V_Array[i];
-        FileBufferArray[index + i] = Vi;
+        let Vi = this.V_Array[i];
+        this.FileBufferArray[index + i] = Vi;
       }
     },
     msg: "LD [I], Vx"
@@ -729,31 +737,15 @@ let Instruction = {
       }
     },
     done(X) {
-      let index = Register_I - MEMORY_START;
+      let index = this.Register_I - MEMORY_START;
       for (let i = 0; i <= X; i++) {
-        V_Array[i] = FileBufferArray[index + i];
+        this.V_Array[i] = this.FileBufferArray[index + i];
       }
     },
     msg: "LD Vx, [I]"
   },
 };
 
-let Util = {
-  getBytesSlice(start, length, CPU) {
-    let result = new Array(length).fill(0);
-    if (start >= INNERDIGITS_START && start <= INNERDIGITS_MAX) {
-      for (let i = 0; i < length; i++) {
-        result[i] = INNERDIGITS[start - INNERDIGITS_START + i];
-      }
-    }
-    if (start >= MEMORY_START) {
-      for (let i = 0; i < length; i++) {
-        result[i] = FileBufferArray[start - MEMORY_START + i];
-      }
-    }
-    return result;
-  }
-}
 
 let InstructionParam = {
   "NNN": {

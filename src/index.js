@@ -25,7 +25,6 @@ let Chip8 = {
   initCpu() {
     this.cpu = Object.create(CPU);
     this.cpu.init(this.display, this.keyboard);
-    // this.cpu.run();
   },
   read(buffer) {
     this.cpu.read(Array.from(buffer)); 
@@ -41,6 +40,11 @@ let Chip8 = {
   },
   getRegister(){
     return this.cpu.getRegister();
+  },
+  reset(){
+    this.display.reset();
+    this.cpu.reset();
+    this.keyboard.reset();
   }
 };
 

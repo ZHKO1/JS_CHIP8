@@ -17,29 +17,27 @@ const KeyboardMap = {
   "F": "v",
 };
 
-let isKeyDown = false;
-// 当前按键 对应的十六键值
-let current0xKey = null;
-
 let Keyboard = {
+  isKeyDown: false,
+  currentKey_0x: null,
   init() {
-    document.onkeydown = this.listen;
+    document.onkeydown = this.listen.bind(this);
     document.onkeyup = (e) => {
-      isKeyDown = false;
-      current0xKey = null;
+      this.isKeyDown = false;
+      this.currentKey_0x = null;
     }
   },
   listen(e) {
     let key = e.key;
     for (let _0xKey in KeyboardMap) {
       if (KeyboardMap[_0xKey] == key) {
-        isKeyDown = true;
-        current0xKey = _0xKey
+        this.isKeyDown = true;
+        this.currentKey_0x = _0xKey;
       }
     }
   },
   getCurrentStatus() {
-    return [isKeyDown, parseInt(current0xKey, 16)]
+    return [this.isKeyDown, parseInt(this.currentKey_0x, 16)]
   },
   waitKeyDown() {
     return new Promise((next) => {
@@ -47,18 +45,21 @@ let Keyboard = {
         let key = e.key;
         for (let _0xKey in KeyboardMap) {
           if (KeyboardMap[_0xKey] == key) {
-            current0xKey = _0xKey;
-            next(parseInt(current0xKey, 16));
-            document.onkeydown = this.listen;
-            isKeyDown = false;
-            current0xKey = null;
+            this.isKeyDown = true;
+            this.currentKey_0x = _0xKey;
+            next(parseInt(this.currentKey_0x, 16));
+            document.onkeydown = this.listen.bind(this);
+            this.isKeyDown = false;
+            this.currentKey_0x = null;
           }
         }
       };
     })
   },
-
-
+  reset(){
+    this.isKeyDown = false;
+    this.currentKey_0x = null;
+  }
 }
 
 export default Keyboard;
