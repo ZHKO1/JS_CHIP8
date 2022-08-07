@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Instruction } from '../src/cpu.js';
 import CPU from '../src/cpu.js';
+import Keyboard from '../src/keyboard.js';
 
 let mockDisplay = {
   width: 64,
@@ -19,7 +20,7 @@ let mockDisplay = {
   },
   clearCtx() {
   },
-  reset(){
+  reset() {
     this.pixelArray = new Array(this.width * this.height).fill(0);
   }
 }
@@ -46,7 +47,9 @@ describe('👀 SCREENSHOTS are correct', function () {
       cpu = Object.create(CPU);
       let display = Object.create(mockDisplay);
       display.reset();
-      cpu.init(display);
+      let keyboard = Object.create(Keyboard);
+      keyboard.init();
+      cpu.init(display, keyboard);
     });
 
     async function excute(instruction) {
@@ -341,20 +344,18 @@ describe('👀 SCREENSHOTS are correct', function () {
       expect(cpu.V_Array[0xf]).equal(1)
     })
 
-    /*
     it('25: SKP_VX (Ex9E) - Program counter should increment by four bytes if key with value of register x is selected', async () => {
       let instruction = 0xea9e;
       cpu.V_Array[0xa] = 4;
-      // Mock CPU interface keys 0, 2, 3, 4 selected
+      cpu.Keyboard.keyDown(4);
       await excute(instruction);
-
       expect(cpu.Program_Counter).equal(0x204)
     })
 
     it('25: SKP_VX (Ex9E) - Program counter should increment by two bytes if key with value of register x is not selected', async () => {
       let instruction = 0xea9e;
       cpu.V_Array[0xa] = 1;
-      // Mock CPU interface does not have 1 selected
+      cpu.Keyboard.keyUp(1);
       await excute(instruction);
 
       expect(cpu.Program_Counter).equal(0x202)
@@ -363,19 +364,19 @@ describe('👀 SCREENSHOTS are correct', function () {
     it('26: SKNP_VX (ExA1) - Program counter should increment by two bytes if value of register x is a selected key', async () => {
       let instruction = 0xeba1;
       cpu.V_Array[0xb] = 4;
+      cpu.Keyboard.keyDown(4);
       await excute(instruction);
-
       expect(cpu.Program_Counter).equal(0x202)
     })
 
     it('26: SKNP_VX (ExA1) - Program counter should increment by four bytes if value of register x is not a selected key', async () => {
-      let instruction = 0xea9e;
-      cpu.V_Array[0xb] = 1;
+      let instruction = 0xeba1;
+      cpu.V_Array[0xa] = 1;
+      cpu.Keyboard.keyUp(1);
       await excute(instruction);
-
       expect(cpu.Program_Counter).equal(0x204)
     })
-    */
+
     it('27: LD_VX_DT (Fx07) - Register x should be set to the value of DT (delay timer)', async () => {
       let instruction = 0xfa07;
       cpu.Delay_Timer = 0xf;
@@ -383,15 +384,16 @@ describe('👀 SCREENSHOTS are correct', function () {
 
       expect(cpu.V_Array[0xa]).equal(0xf)
     })
-    /*
+
     it('28: LD_VX_N (Fx0A) - Register x should be set to the value of keypress', async () => {
       let instruction = 0xfb0a;
       await excute(instruction);
-      instruction = 0xfa07;
+      expect(cpu.V_Array[0xb]).equal(0);
+      cpu.Keyboard.keyDown(5);
       await excute(instruction);
       expect(cpu.V_Array[0xb]).equal(5)
     })
-    */
+
     it('29: LD_DT_VX (Fx15) - Delay timer should be set to the value of register x', async () => {
       // todo tick
       let instruction = 0xfb15;

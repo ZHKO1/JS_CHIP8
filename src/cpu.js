@@ -580,8 +580,8 @@ let Instruction = {
     },
     done(X) {
       let Keyboard = this.Keyboard;
-      let [isKeyDown, currentKey_0x] = Keyboard.getCurrentStatus();
-      if (isKeyDown && (currentKey_0x == this.V_Array[X])) {
+      let isKeyDown = Keyboard.getKey(this.V_Array[X]);
+      if (isKeyDown) {
         this.Program_Counter += 2;
       }
     },
@@ -598,8 +598,8 @@ let Instruction = {
     },
     done(X) {
       let Keyboard = this.Keyboard;
-      let [isKeyDown, currentKey_0x] = Keyboard.getCurrentStatus();
-      if (!isKeyDown || (isKeyDown && (currentKey_0x !== this.V_Array[X]))) {
+      let isKeyDown = Keyboard.getKey(this.V_Array[X]);
+      if (!isKeyDown) {
         this.Program_Counter += 2;
       }
     },
@@ -629,11 +629,20 @@ let Instruction = {
       }
     },
     async done(X) {
-      // 避免一次性执行多个指令，突然碰到其中一个强制中断，导致此时没有绘图的情况
-      this.Display.clearCtx();
-      this.Display.render();
-      let key = await this.Keyboard.waitKeyDown();
-      this.V_Array[X] = key;
+      let Keyboard = this.Keyboard;
+      let isKeyDown;
+      let currentKey;
+      for (let i = 0; i < 16; i++) {
+        if (isKeyDown = Keyboard.getKey(i)) {
+          currentKey = i;
+          break;
+        }
+      }
+      if (!isKeyDown) {
+        this.Program_Counter -= 2;
+      } else {
+        this.V_Array[X] = currentKey;
+      }
     },
     msg: "LD Vx, K"
   },

@@ -11,9 +11,11 @@
       display: flex;
       height: auto;
     }
+
     #Instruction {
       flex: 1;
     }
+
     #V0F {
       flex: 1;
     }
@@ -49,7 +51,108 @@
       <div>PC <span id="PC"></span></div>
     </div>
   </div>
-  <script type="module" src="./index.js"></script>
+  <script type="module">
+    import Chip8 from './chip8.js'
+
+    let chip8 = Object.create(Chip8);
+    chip8.init({
+      container: "#chip8_container",
+    });
+
+    document.onkeydown = (e) => {
+      let key = e.key;
+      for (let _0xKey in KeyboardMap) {
+        if (KeyboardMap[_0xKey] == key) {
+          chip8.keyDown(parseInt(_0xKey, 16));
+        }
+      }
+    }
+    document.onkeyup = (e) => {
+      let key = e.key;
+      for (let _0xKey in KeyboardMap) {
+        if (KeyboardMap[_0xKey] == key) {
+          chip8.keyUp(parseInt(_0xKey, 16));
+        }
+      }
+    }
+
+    let $selectButton = document.querySelector("#choose");
+    $selectButton.addEventListener("click", function () {
+      chooseFile((buffer) => {
+        chip8.read(buffer);
+      });
+    });
+
+    let $runButton = document.querySelector("#RUN");
+    $runButton.addEventListener("click", function () {
+      chip8.run();
+    });
+
+    let $stopButton = document.querySelector("#STOP");
+    $stopButton.addEventListener("click", function () {
+      chip8.stop();
+    });
+
+    let $stepButton = document.querySelector("#STEP");
+    $stepButton.addEventListener("click", function () {
+      chip8.step();
+      updateStatus();
+    });
+
+
+    function chooseFile(callback) {
+      let $input = document.createElement("input");
+      $input.setAttribute("type", "file");
+      $input.setAttribute("style", "visibility:hidden");
+      document.body.appendChild($input);
+      $input.addEventListener("change", (e) => {
+        let files = e.target.files;
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(files[0]);
+        reader.onload = () => {
+          const buffer = new Uint8Array(reader.result);
+          callback && callback(buffer);
+        }
+      });
+      $input.click();
+    }
+
+    function updateStatus() {
+      let {
+        V_Array,
+        Register_I,
+        Program_Counter
+      } = chip8.getRegister();
+      V_Array.forEach((val, index) => {
+        let $span = document.querySelector("#V" + index);
+        $span.innerHTML = val;
+      })
+      let $spanI = document.querySelector("#I");
+      $spanI.innerHTML = Register_I;
+      let $spanPC = document.querySelector("#PC");
+      $spanPC.innerHTML = Program_Counter;
+    }
+
+
+    const KeyboardMap = {
+      "0": "x",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "q",
+      "5": "w",
+      "6": "e",
+      "7": "a",
+      "8": "s",
+      "9": "d",
+      "A": "z",
+      "B": "c",
+      "C": "4",
+      "D": "r",
+      "E": "f",
+      "F": "v",
+    };
+  </script>
 </body>
 
 </html>

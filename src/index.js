@@ -45,7 +45,14 @@ let Chip8 = {
     this.display.reset();
     this.cpu.reset();
     this.keyboard.reset();
-  }
+  },
+  keyDown(i){
+    this.keyboard.keyDown(i);
+  },
+  keyUp(i){
+    this.keyboard.keyUp(i);
+  },
+  
 };
 
 export default Chip8;
