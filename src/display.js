@@ -33,12 +33,12 @@ let Display = {
       }
     }
   },
-  clear() {
+  clearCtx() {
     this.ctx.clearRect(0, 0, this.$canvas.width, this.$canvas.height);
   },
   reset(){
     this.pixelArray = new Array(this.width * this.height).fill(0);
-    this.clear();
+    this.ctx.clearRect(0, 0, this.$canvas.width, this.$canvas.height);
   }
 }
 

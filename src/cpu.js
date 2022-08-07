@@ -24,6 +24,7 @@ const INNERDIGITS = [
 ];
 
 const MEMORY_START = 0x200;
+const MEMORY_END = 0xE9F;
 
 let CPU = {
   PauseFlag: false,
@@ -35,12 +36,13 @@ let CPU = {
   Program_Counter: MEMORY_START,
   Register_I: 0,
   V_Array: new Array(16).fill(0),
+  FileBufferArray: null,
   Display: null,
   Keyboard: null,
-  FileBufferArray: null,
   init(display, keyboard) {
     this.Display = display;
     this.Keyboard = keyboard;
+    this.reset();
   },
   read(array) {
     this.FileBufferArray = array;
@@ -53,7 +55,7 @@ let CPU = {
       for (let i = 0; i < CLOCK_NUMBER; i++) {
         await this.next();
       }
-      this.Display.clear();
+      this.Display.clearCtx();
       this.Display.render();
       running = await clock_frame();
 
@@ -80,15 +82,15 @@ let CPU = {
     this.Program_Counter = MEMORY_START;
     this.Register_I = 0;
     this.V_Array = new Array(16).fill(0);
+    this.FileBufferArray = new Array(MEMORY_END - MEMORY_START + 1).fill(0);
   },
   async manual_next() {
     await this.next();
-    this.Display.clear();
+    this.Display.clearCtx();
     this.Display.render();
   },
   async next() {
     await this.step();
-    this.Program_Counter += 2;
     this.StepCycles += 1;
     if (this.StepCycles == CLOCK_NUMBER) {
       this.StepCycles = 0;
@@ -144,6 +146,7 @@ let CPU = {
   },
   async excute(type, param) {
     await Instruction[type].done.apply(this, param);
+    this.Program_Counter += 2;
   },
   getRegister() {
     return {
@@ -164,7 +167,7 @@ let Instruction = {
       }
     },
     done() {
-      this.Display.clear();
+      this.Display.clearCtx();
     },
     msg: "CLS"
   },
@@ -627,7 +630,7 @@ let Instruction = {
     },
     async done(X) {
       // 避免一次性执行多个指令，突然碰到其中一个强制中断，导致此时没有绘图的情况
-      this.Display.clear();
+      this.Display.clearCtx();
       this.Display.render();
       let key = await this.Keyboard.waitKeyDown();
       this.V_Array[X] = key;
@@ -803,5 +806,7 @@ function eq(code, index, value) {
   }
 }
 
-
+export {
+  Instruction
+};
 export default CPU;

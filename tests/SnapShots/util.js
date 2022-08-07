@@ -7,7 +7,7 @@ async function takeScreenshot(page, fileName, path) {
   await new Promise((next) => {
     setTimeout(() => {
       next()
-    }, 500)
+    }, 600)
   });
   let $chip8_container = await page.$("#chip8");
   await $chip8_container.screenshot({ path: `${path}/${fileName}.png` });
