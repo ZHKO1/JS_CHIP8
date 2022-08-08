@@ -47,7 +47,7 @@ let CPU = {
   read(array) {
     this.FileBufferArray = array;
   },
-  async run() {
+  async run(callback) {
     let self = this;
     this.PauseFlag = false;
     let running = true;
@@ -57,8 +57,8 @@ let CPU = {
       }
       this.Display.clearCtx();
       this.Display.render();
+      callback && callback();
       running = await clock_frame();
-
     }
     function clock_frame() {
       return new Promise((next) => {

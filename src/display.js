@@ -15,7 +15,7 @@ let Display = {
     this.$canvas.id = "chip8";
     this.$container.appendChild(this.$canvas);
     this.ctx = this.$canvas.getContext("2d");
-    this.ctx.fillStyle = "blue";
+    this.ctx.fillStyle = "#33ff66";
     this.pixelArray = new Array(this.width * this.height).fill(0);
   },
   update(array) {
