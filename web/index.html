@@ -6,152 +6,209 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet">
   <style>
-    #log {
+    :root {
+      --terminal-color: #33ff66;
+    }
+
+    body {
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      line-height: 22px;
+      color: var(--terminal-color);
+      background-color: black;
+    }
+
+    h2 {
+      font-size: 50px;
+      text-align: center;
+    }
+
+    .page {
+      width: 512px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .label {
+      font-size: 30px;
+    }
+
+    button,
+    select {
+      font-family: 'VT323', monospace;
+      font-size: 30px;
+      width: 100px;
+      border: 3px solid var(--terminal-color);
+      color: var(--terminal-color);
+      background-color: black;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    select {
+      width: 200px;
+    }
+
+    button:active {
+      color: black;
+      background-color: var(--terminal-color);
+    }
+
+    .screen {
+      width: 512px;
+      height: 256px;
+      border: 1px solid var(--terminal-color);
+      padding: 5px;
+      margin-bottom: 20px;
+    }
+
+    .screen canvas {
+      width: 100%;
+    }
+
+    .container {
       display: flex;
-      height: auto;
+      flex-direction: row;
     }
 
-    #Instruction {
-      flex: 1;
+    .memory {
+      height: 512px;
+      width: 312px;
+      overflow-y: scroll;
+      padding: 5px;
     }
 
-    #V0F {
-      flex: 1;
+    .registers {
+      height: 512px;
+      width: 100px;
+      padding: 5px;
+    }
+
+    .pc {
+      background-color: var(--terminal-color);
+      color: black;
     }
   </style>
 </head>
 
 <body>
-  <button id="choose">选择ROM</button>
-  <button id="STOP">STOP</button>
-  <button id="RUN">RUN</button>
-  <button id="STEP">STEP</button>
-  <div id="chip8_container"></div>
-  <div id="log">
-    <div id="Instruction"></div>
-    <div id="V0F">
-      <div>V0 <span id="V0"></span></div>
-      <div>V1 <span id="V1"></span></div>
-      <div>V2 <span id="V2"></span></div>
-      <div>V3 <span id="V3"></span></div>
-      <div>V4 <span id="V4"></span></div>
-      <div>V5 <span id="V5"></span></div>
-      <div>V6 <span id="V6"></span></div>
-      <div>V7 <span id="V7"></span></div>
-      <div>V8 <span id="V8"></span></div>
-      <div>V9 <span id="V9"></span></div>
-      <div>V10 <span id="V10"></span></div>
-      <div>V11 <span id="V11"></span></div>
-      <div>V12 <span id="V12"></span></div>
-      <div>V13 <span id="V13"></span></div>
-      <div>V14 <span id="V14"></span></div>
-      <div>V15 <span id="V15"></span></div>
-      <div>I <span id="I"></span></div>
-      <div>PC <span id="PC"></span></div>
+  <div class='page'>
+    <h2>JS-CHIP-8</h2>
+    <p>A Chip-8 emulator written in JavaScript.</p>
+    <p>For WIPEOFF, the default ROM, press W to start the game, then Q / E to move the paddle.
+      Other ROMs may be buggy!</p>
+    <span class='label'>ROM:</span>
+    <select id='roms'>
+    </select>
+    <button id='run'>Start</button>
+    <button id='step'>Step</button>
+    <div class='screen' id="chip8_container">
+    </div>
+    <div class='container'>
+      <div class='memory'></div>
+      <div class='registers' id='r1'></div>
+      <div class='registers' id='r2'></div>
     </div>
   </div>
+  <script src='jquery-3.2.1.min.js'></script>
   <script type="module">
     import Chip8 from './chip8.js'
-
-    let chip8 = Object.create(Chip8);
-    chip8.init({
-      container: "#chip8_container",
-    });
-
-    document.onkeydown = (e) => {
-      let key = e.key;
-      for (let _0xKey in KeyboardMap) {
-        if (KeyboardMap[_0xKey] == key) {
-          chip8.keyDown(parseInt(_0xKey, 16));
+    const ROMS = [
+      "BLINKY",
+      "PONG",
+      "WIPEOFF"
+    ];
+    const run = async () => {
+      const dumpRegisters = () => {};
+      const updateProgramCounter = () => {};
+      const dumpMemory = () => {};
+      const updateDebuggerMsg = () => {
+        dumpRegisters();
+        updateProgramCounter();
+        dumpMemory();
+      }
+      const loadRom = rom =>
+        fetch(`roms/${rom}`)
+          .then(i => i.arrayBuffer())
+          .then(buffer => {
+            chip8.reset();
+            const uint8View = new Uint8Array(buffer)
+            chip8.read(uint8View);
+            running = true;
+            runButton.innerHTML = "Start";
+            chip8.run(() => {
+              updateDebuggerMsg();
+            });
+          });
+      document.getElementById("roms").addEventListener("change", e => {
+        loadRom(e.target.value);
+      });
+      document.getElementById("step").addEventListener("click", () => {
+        chip8.step();
+        updateDebuggerMsg();
+      });
+      document.onkeydown = (e) => {
+        let key = e.key;
+        for (let _0xKey in KeyboardMap) {
+          if (KeyboardMap[_0xKey] == key) {
+            chip8.keyDown(parseInt(_0xKey, 16));
+          }
         }
       }
-    }
-    document.onkeyup = (e) => {
-      let key = e.key;
-      for (let _0xKey in KeyboardMap) {
-        if (KeyboardMap[_0xKey] == key) {
-          chip8.keyUp(parseInt(_0xKey, 16));
+      document.onkeyup = (e) => {
+        let key = e.key;
+        for (let _0xKey in KeyboardMap) {
+          if (KeyboardMap[_0xKey] == key) {
+            chip8.keyUp(parseInt(_0xKey, 16));
+          }
         }
       }
-    }
-
-    let $selectButton = document.querySelector("#choose");
-    $selectButton.addEventListener("click", function () {
-      chooseFile((buffer) => {
-        chip8.read(buffer);
+      
+      const KeyboardMap = {
+        "0": "x",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "q",
+        "5": "w",
+        "6": "e",
+        "7": "a",
+        "8": "s",
+        "9": "d",
+        "A": "z",
+        "B": "c",
+        "C": "4",
+        "D": "r",
+        "E": "f",
+        "F": "v",
+      };      
+      ROMS.forEach(rom => {
+        $("#roms").append(`<option value='${rom}'>${rom}</option>`);
       });
-    });
-
-    let $runButton = document.querySelector("#RUN");
-    $runButton.addEventListener("click", function () {
-      chip8.run();
-    });
-
-    let $stopButton = document.querySelector("#STOP");
-    $stopButton.addEventListener("click", function () {
-      chip8.stop();
-    });
-
-    let $stepButton = document.querySelector("#STEP");
-    $stepButton.addEventListener("click", function () {
-      chip8.step();
-      updateStatus();
-    });
-
-
-    function chooseFile(callback) {
-      let $input = document.createElement("input");
-      $input.setAttribute("type", "file");
-      $input.setAttribute("style", "visibility:hidden");
-      document.body.appendChild($input);
-      $input.addEventListener("change", (e) => {
-        let files = e.target.files;
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(files[0]);
-        reader.onload = () => {
-          const buffer = new Uint8Array(reader.result);
-          callback && callback(buffer);
+      
+      let running = false;
+      const runButton = document.getElementById("run");
+      runButton.addEventListener("click", () => {
+        if (running) {
+          chip8.stop();
+          running = false;
+          runButton.innerHTML = "Start";
+        } else {
+          chip8.run();
+          running = true;
+          runButton.innerHTML = "Stop";
         }
       });
-      $input.click();
+      let chip8 = Object.create(Chip8);
+      chip8.init({
+        container: "#chip8_container",
+      });
+      $("#roms")[0].value = "WIPEOFF";
+      loadRom("WIPEOFF");
     }
-
-    function updateStatus() {
-      let {
-        V_Array,
-        Register_I,
-        Program_Counter
-      } = chip8.getRegister();
-      V_Array.forEach((val, index) => {
-        let $span = document.querySelector("#V" + index);
-        $span.innerHTML = val;
-      })
-      let $spanI = document.querySelector("#I");
-      $spanI.innerHTML = Register_I;
-      let $spanPC = document.querySelector("#PC");
-      $spanPC.innerHTML = Program_Counter;
-    }
-
-
-    const KeyboardMap = {
-      "0": "x",
-      "1": "1",
-      "2": "2",
-      "3": "3",
-      "4": "q",
-      "5": "w",
-      "6": "e",
-      "7": "a",
-      "8": "s",
-      "9": "d",
-      "A": "z",
-      "B": "c",
-      "C": "4",
-      "D": "r",
-      "E": "f",
-      "F": "v",
-    };
+    run();
   </script>
 </body>
 

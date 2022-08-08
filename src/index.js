@@ -29,8 +29,8 @@ let Chip8 = {
   read(buffer) {
     this.cpu.read(Array.from(buffer)); 
   },
-  run() {
-    this.cpu.run(); 
+  run(frameCallback) {
+    this.cpu.run(frameCallback); 
   },
   stop() {
     this.cpu.stop(); 
