@@ -115,7 +115,7 @@ let CPU = {
     if (result) {
       let { type, param } = result;
       // console.log(`${to0X(memory_index)} tpye ${Instruction[type].msg}, ${JSON.stringify(param.map(x => to0X(x)))}`)
-      await this.execute(type, param);
+      this.execute(type, param);
     } else {
       throw (new Error("读取不出指令"));
     }
@@ -137,18 +137,21 @@ let CPU = {
     for (let key of keys) {
       let param = Instruction[key].is(code);
       let type = key;
+      let msg = Instruction[key].msg;
       if (param) {
         result = {
           type,
-          param
+          param,
+          msg,
+          code
         }
         break;
       }
     }
     return result;
   },
-  async execute(type, param) {
-    await Instruction[type].done.apply(this, param);
+  execute(type, param) {
+    Instruction[type].done.apply(this, param);
     this.Program_Counter += 2;
   },
   getRegister() {
@@ -631,7 +634,7 @@ let Instruction = {
         return false;
       }
     },
-    async done(X) {
+    done(X) {
       let Keyboard = this.Keyboard;
       let isKeyDown;
       let currentKey;
