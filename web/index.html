@@ -120,26 +120,73 @@
       "PONG",
       "WIPEOFF"
     ];
+    const hex = (value, length = 2) => {
+      const padded = "0000" + value.toString(16).toUpperCase();
+      return padded.substr(padded.length - length);
+    };
+
     const run = async () => {
-      const dumpRegisters = () => {};
-      const updateProgramCounter = () => {};
-      const dumpMemory = () => {};
+      const dumpRegisters = () => {
+        let {
+          V_Array,
+          Register_I,
+          Program_Counter
+        } = chip8.getRegister();
+        $("#r1").empty();
+        for (let i = 0; i < V_Array.length; i++) {
+          $("#r1").append(`<div>V${i}: ${V_Array[i]}</div>`);
+        }
+        $("#r2").empty();
+        $("#r2").append(`<div>PC: ${Program_Counter}</div>`);
+        $("#r2").append(`<div>I: ${Register_I}</div>`);
+      };
+      const updateProgramCounter = () => {
+        let {
+          Program_Counter: pc
+        } = chip8.getRegister();
+        $(`.memory > div`).removeClass("pc");
+        const currentAddress = $(`.memory .addr_${pc}`).addClass("pc");
+        if (currentAddress[0]) {
+          const container = $(".memory");
+          container.scrollTop(
+            currentAddress.offset().top -
+            container.offset().top +
+            container.scrollTop()
+          );
+        }
+      };
+      const dumpMemory = () => {
+        $(".memory").empty();
+        let address = 0x200;
+        while (address < 4096) {
+          const clazz = `addr_${address}`;
+          const haddress = "0x" + hex(address, 4);
+          const {
+            type,
+            param,
+            msg,
+            code
+          } = chip8.cpu.decode(address) || {
+            type: '',
+            param: [],
+            msg: '',
+            code: '',
+          };
+          $(".memory").append(
+            `<div class='${clazz}'>${haddress} - ${type ? hex(code, 4) + ' ' + msg : '-'}</div>`
+          );
+          address += 2;
+        }
+      };
       const updateDebuggerMsg = () => {
-        dumpRegisters();
         updateProgramCounter();
-        dumpMemory();
+        dumpRegisters();
       }
       let thread = null;
       const loadRom = rom =>
         fetch(`roms/${rom}`)
           .then(i => i.arrayBuffer())
           .then(async (buffer) => {
-            chip8.stop();            
-            await new Promise((next) => {
-              setTimeout(() => {
-                next();
-              }, 1000);
-            })
             chip8.reset();
             const uint8View = new Uint8Array(buffer)
             chip8.read(uint8View);
@@ -148,12 +195,16 @@
             chip8.run(() => {
               updateDebuggerMsg();
             });
+            dumpMemory();
           });
       document.getElementById("roms").addEventListener("change", e => {
         loadRom(e.target.value);
       });
       document.getElementById("step").addEventListener("click", () => {
+        chip8.stop();
         chip8.step();
+        running = false;
+        runButton.innerHTML = "Start";
         updateDebuggerMsg();
       });
       document.onkeydown = (e) => {
@@ -172,7 +223,7 @@
           }
         }
       }
-      
+
       const KeyboardMap = {
         "0": "x",
         "1": "1",
@@ -190,11 +241,11 @@
         "D": "r",
         "E": "f",
         "F": "v",
-      };      
+      };
       ROMS.forEach(rom => {
         $("#roms").append(`<option value='${rom}'>${rom}</option>`);
       });
-      
+
       let running = false;
       const runButton = document.getElementById("run");
       runButton.addEventListener("click", () => {
@@ -203,7 +254,9 @@
           running = false;
           runButton.innerHTML = "Start";
         } else {
-          chip8.run();
+          chip8.run(() => {
+            updateDebuggerMsg();
+          });
           running = true;
           runButton.innerHTML = "Stop";
         }
