@@ -97,8 +97,7 @@
   <div class='page'>
     <h2>JS-CHIP-8</h2>
     <p>A Chip-8 emulator written in JavaScript.</p>
-    <p>For WIPEOFF, the default ROM, press W to start the game, then Q / E to move the paddle.
-      Other ROMs may be buggy!</p>
+    <p class="description">Press ← or → to start the game, Go! Go! Go!</p>
     <span class='label'>ROM:</span>
     <select id='roms'>
     </select>
@@ -116,9 +115,34 @@
   <script type="module">
     import Chip8 from './chip8.js'
     const ROMS = [
-      "BLINKY",
-      "PONG",
-      "WIPEOFF"
+      {
+        name: "BLINKY",
+        description: "Press ←, →, ↑ or ↓ to move pac-man, enjoy game!",
+        keyboard: {
+          "3": "ArrowUp",
+          "6": "ArrowDown",
+          "7": "ArrowLeft",
+          "8": "ArrowRight",
+        }
+      },
+      {
+        name: "PONG",
+        description: "Player1 press A or Z to move the left paddle, and player2 press ↑ or ↓ to move the right paddle",
+        keyboard: {
+          "1": "A",
+          "2": "Z",
+          "C": "ArrowUp",
+          "D": "ArrowDown",
+        }
+      },
+      {
+        name: "WIPEOFF",
+        description: "Press ← or → to start the game, Go! Go! Go!",
+        keyboard: {
+          "4": "ArrowLeft",
+          "6": "ArrowRight",
+        }
+      }
     ];
     const hex = (value, length = 2) => {
       const padded = "0000" + value.toString(16).toUpperCase();
@@ -196,9 +220,14 @@
               updateDebuggerMsg();
             });
             dumpMemory();
+          }).then(() => {
+            let { description, keyboard } = ROMS.filter(item => item.name == rom)[0];
+            $('.description').html(description);
+            KeyboardMap = keyboard;
           });
       document.getElementById("roms").addEventListener("change", e => {
-        loadRom(e.target.value);
+        let rom = e.target.value;
+        loadRom(rom);
       });
       document.getElementById("step").addEventListener("click", () => {
         chip8.stop();
@@ -207,6 +236,7 @@
         runButton.innerHTML = "Start";
         updateDebuggerMsg();
       });
+      let KeyboardMap = {};
       document.onkeydown = (e) => {
         let key = e.key;
         for (let _0xKey in KeyboardMap) {
@@ -217,6 +247,7 @@
       }
       document.onkeyup = (e) => {
         let key = e.key;
+        console.log(key);
         for (let _0xKey in KeyboardMap) {
           if (KeyboardMap[_0xKey] == key) {
             chip8.keyUp(parseInt(_0xKey, 16));
@@ -224,26 +255,8 @@
         }
       }
 
-      const KeyboardMap = {
-        "0": "x",
-        "1": "1",
-        "2": "2",
-        "3": "3",
-        "4": "q",
-        "5": "w",
-        "6": "e",
-        "7": "a",
-        "8": "s",
-        "9": "d",
-        "A": "z",
-        "B": "c",
-        "C": "4",
-        "D": "r",
-        "E": "f",
-        "F": "v",
-      };
       ROMS.forEach(rom => {
-        $("#roms").append(`<option value='${rom}'>${rom}</option>`);
+        $("#roms").append(`<option value='${rom.name}'>${rom.name}</option>`);
       });
 
       let running = false;
