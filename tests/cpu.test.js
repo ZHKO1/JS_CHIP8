@@ -52,21 +52,21 @@ describe('👀 SCREENSHOTS are correct', function () {
       cpu.init(display, keyboard);
     });
 
-    async function excute(instruction) {
+    async function execute(instruction) {
       let { type, param } = cpu.matchInstruction(instruction);
-      await cpu.excute(type, param);
+      await cpu.execute(type, param);
     }
 
     it('3: CLS (00e0) - Program should clear the display', async () => {
       let instruction = 0x00e0;
-      await excute(instruction);
+      await execute(instruction);
       expect(JSON.stringify(cpu.Display.pixelArray)).equal(JSON.stringify(new Array(cpu.Display.width * cpu.Display.height).fill(0)))
     })
 
     it('3: RET (00ee) - Program counter should be set to stack pointer, then decrement stack pointer', async () => {
       let instruction = 0x00ee;
       cpu.Stack[0x2] = 0xf;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0xf + 2);
       expect(cpu.Stack.length).equal(2);
     })
@@ -74,7 +74,7 @@ describe('👀 SCREENSHOTS are correct', function () {
 
     it('4: JP_ADDR (1nnn) - Program counter should be set to address in argument', async () => {
       let instruction = 0x1333;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x333);
     })
 
@@ -82,7 +82,7 @@ describe('👀 SCREENSHOTS are correct', function () {
     it('5: CALL_ADDR (2nnn) - Stack pointer should increment, program counter should be set to address in argument', async () => {
       let instruction = 0x2062;
       let PC = cpu.Program_Counter;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Stack.length).equal(1)
       expect(cpu.Stack[cpu.Stack.length - 1]).equal(PC)
       expect(cpu.Program_Counter).equal(0x062);
@@ -90,27 +90,27 @@ describe('👀 SCREENSHOTS are correct', function () {
 
     it('6: SE_VX_NN (3xnn) - Program counter should increment by two bytes if register x is not equal to nn argument', async () => {
       let instruction = 0x3abb;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x202);
     })
 
     it('6: SE_VX_NN (3xnn) - Program counter should increment by four bytes if register x is equal to nn argument', async () => {
       let instruction = 0x3abb;
       cpu.V_Array[0xa] = 0xbb;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x204);
     })
 
     it('7: SNE_VX_NN (4xnn) - Program counter should increment by four bytes if register x is not equal to nn argument', async () => {
       let instruction = 0x4acc;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x204);
     })
 
     it('7: SNE_VX_NN (4xnn) - Program counter should increment by two bytes if register x is equal to nn argument', async () => {
       let instruction = 0x4acc;
       cpu.V_Array[0xa] = 0xcc;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x202);
     })
 
@@ -118,7 +118,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x5ab0;
       cpu.V_Array[0xa] = 0x5;
       cpu.V_Array[0xb] = 0x5;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x204);
     })
 
@@ -126,7 +126,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x5ab0;
       cpu.V_Array[0xa] = 0x5;
       cpu.V_Array[0xb] = 0x6;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x202);
     })
 
@@ -135,21 +135,21 @@ describe('👀 SCREENSHOTS are correct', function () {
     it('9: LD_VX_NN (6xnn) - Register x should be set to the value of argument nn', async () => {
       let instruction = 0x6abb;
       cpu.V_Array[0xa] = 0x10;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.V_Array[0xa]).equal(0xbb);
     })
 
     it('10: ADD_VX_NN (7xnn) - Register x should be set to the value of register x plus argument nn', async () => {
       let instruction = 0x7abb;
       cpu.V_Array[0xa] = 0x10;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.V_Array[0xa]).equal(0x10 + 0xbb);
     })
 
     it('11: LD_VX_VY (8xy0) - Register x should be set to the value of register y', async () => {
       let instruction = 0x8ab0;
       cpu.V_Array[0xb] = 0x8;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.V_Array[0xa]).equal(0x8);
     })
 
@@ -157,7 +157,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab1;
       cpu.V_Array[0xa] = 0x3;
       cpu.V_Array[0xb] = 0x4;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.V_Array[0xa]).equal(0x7);
     })
 
@@ -165,7 +165,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab2;
       cpu.V_Array[0xa] = 0x3;
       cpu.V_Array[0xb] = 0x4;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.V_Array[0xa]).equal(0);
     })
 
@@ -173,7 +173,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab3;
       cpu.V_Array[0xa] = 0x3;
       cpu.V_Array[0xb] = 0x3;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(0x3 ^ 0x3).equal(0)
       expect(cpu.V_Array[0xa]).equal(0)
@@ -183,7 +183,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab4;
       cpu.V_Array[0xa] = 0x3;
       cpu.V_Array[0xb] = 0x4;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(0x7)
       expect(cpu.V_Array[0xf]).equal(0)
@@ -193,7 +193,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab4;
       cpu.V_Array[0xa] = 0xff;
       cpu.V_Array[0xb] = 0xff;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(0xfe)
       expect(cpu.V_Array[0xf]).equal(1)
@@ -203,7 +203,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab5;
       cpu.V_Array[0xa] = 0x4;
       cpu.V_Array[0xb] = 0x2;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(2)
       expect(cpu.V_Array[0xf]).equal(1)
@@ -213,7 +213,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab5;
       cpu.V_Array[0xa] = 0x2;
       cpu.V_Array[0xb] = 0x3;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(255)
       expect(cpu.V_Array[0xf]).equal(0)
@@ -222,7 +222,7 @@ describe('👀 SCREENSHOTS are correct', function () {
     it('17: SHR_VX_VY (8xy6) - Shift register x right 1 (AKA divide x by 2). Set VF to 1 if least significant bit of register x is 1', async () => {
       let instruction = 0x8ab6;
       cpu.V_Array[0xa] = 0x3;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(0x3 >> 1)
       expect(cpu.V_Array[0xf]).equal(1)
@@ -232,7 +232,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab7;
       cpu.V_Array[0xa] = 0x3;
       cpu.V_Array[0xb] = 0x2;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(255)
       expect(cpu.V_Array[0xf]).equal(0)
@@ -242,7 +242,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x8ab7;
       cpu.V_Array[0xa] = 0x2;
       cpu.V_Array[0xb] = 0x3;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(1)
       expect(cpu.V_Array[0xf]).equal(1)
@@ -251,7 +251,7 @@ describe('👀 SCREENSHOTS are correct', function () {
     it('19: SHL_VX_VY (8xyE) - Shift register x left one (AKA multiply by 2). Set VF to 1 if least significant bit of register x is 1', async () => {
       let instruction = 0x8abe;
       cpu.V_Array[0xa] = 0x3;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(0x3 << 1)
       expect(cpu.V_Array[0xf]).equal(0)
@@ -261,7 +261,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x9ab0;
       cpu.V_Array[0xa] = 0x3;
       cpu.V_Array[0xb] = 0x4;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Program_Counter).equal(0x204)
     })
@@ -270,14 +270,14 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0x9ab0;
       cpu.V_Array[0xa] = 0x3;
       cpu.V_Array[0xb] = 0x3;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Program_Counter).equal(0x202)
     })
 
     it('21: LD_I_ADDR (Annn) - I should be set to the value of argument nnn', async () => {
       let instruction = 0xa999;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Register_I).equal(0x999)
     })
@@ -285,7 +285,7 @@ describe('👀 SCREENSHOTS are correct', function () {
     it('22: JP_V0_ADDR (Bnnn) - Program counter should be set to the sum of V0 and argument nnn', async () => {
       let instruction = 0xb300;
       cpu.V_Array[0] = 0x2;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Program_Counter).equal(0x2 + 0x300)
     })
@@ -295,7 +295,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0xd125;
       cpu.V_Array[0x1] = 1;
       cpu.V_Array[0x2] = 1;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Display.pixelArray[1 + 1 * cpu.Display.width]).equal(1)
       expect(cpu.Display.pixelArray[1 + 2 * cpu.Display.width]).equal(1)
       expect(cpu.Display.pixelArray[1 + 3 * cpu.Display.width]).equal(1)
@@ -324,7 +324,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       instruction = 0xd125;
       cpu.V_Array[0x1] = 1;
       cpu.V_Array[0x2] = 1;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Display.pixelArray[1 + 1 * cpu.Display.width]).equal(0)
       expect(cpu.Display.pixelArray[1 + 2 * cpu.Display.width]).equal(0)
       expect(cpu.Display.pixelArray[1 + 3 * cpu.Display.width]).equal(0)
@@ -348,7 +348,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0xea9e;
       cpu.V_Array[0xa] = 4;
       cpu.Keyboard.keyDown(4);
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x204)
     })
 
@@ -356,7 +356,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0xea9e;
       cpu.V_Array[0xa] = 1;
       cpu.Keyboard.keyUp(1);
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Program_Counter).equal(0x202)
     })
@@ -365,7 +365,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0xeba1;
       cpu.V_Array[0xb] = 4;
       cpu.Keyboard.keyDown(4);
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x202)
     })
 
@@ -373,24 +373,24 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0xeba1;
       cpu.V_Array[0xa] = 1;
       cpu.Keyboard.keyUp(1);
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.Program_Counter).equal(0x204)
     })
 
     it('27: LD_VX_DT (Fx07) - Register x should be set to the value of DT (delay timer)', async () => {
       let instruction = 0xfa07;
       cpu.Delay_Timer = 0xf;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.V_Array[0xa]).equal(0xf)
     })
 
     it('28: LD_VX_N (Fx0A) - Register x should be set to the value of keypress', async () => {
       let instruction = 0xfb0a;
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.V_Array[0xb]).equal(0);
       cpu.Keyboard.keyDown(5);
-      await excute(instruction);
+      await execute(instruction);
       expect(cpu.V_Array[0xb]).equal(5)
     })
 
@@ -398,7 +398,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       // todo tick
       let instruction = 0xfb15;
       cpu.V_Array[0xb] = 0xf;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Delay_Timer).equal(0xf)
     })
@@ -407,7 +407,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       // todo tick
       let instruction = 0xfa18;
       cpu.V_Array[0xa] = 0xf;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Sound_Timer).equal(0xf)
     })
@@ -416,7 +416,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0xfa1e;
       cpu.Register_I = 0xe
       cpu.V_Array[0xa] = 0xf;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Register_I).equal(0xe + 0xf)
     })
@@ -424,7 +424,7 @@ describe('👀 SCREENSHOTS are correct', function () {
     it('32: LD_F_VX (Fx29) - I should be set to the location of the sprite for digit in register x', async () => {
       let instruction = 0xfa29;
       cpu.V_Array[0xa] = 0xa;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.Register_I).equal(0xa * 5)
     })
@@ -433,7 +433,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       let instruction = 0xfa33;
       cpu.V_Array[0xa] = 0x7b;
       cpu.Register_I = 0x300;
-      await excute(instruction);
+      await execute(instruction);
 
       expect(cpu.FileBufferArray[0x300 - 0x200]).equal(1)
       expect(cpu.FileBufferArray[0x301 - 0x200]).equal(2)
@@ -447,7 +447,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       for (let i = 0; i <= 0xb; i++) {
         cpu.V_Array[i] = i;
       }
-      await excute(instruction);
+      await execute(instruction);
 
       for (let i = 0; i <= 0xb; i++) {
         expect(cpu.FileBufferArray[cpu.Register_I + i - 0x200]).equal(i)
@@ -463,7 +463,7 @@ describe('👀 SCREENSHOTS are correct', function () {
       for (let i = 0; i <= 0xa; i++) {
         cpu.FileBufferArray[cpu.Register_I + i - 0x200] = i
       }
-      await excute(instruction);
+      await execute(instruction);
 
       for (let i = 0; i <= 0xa; i++) {
         expect(cpu.V_Array[i]).equal(i)

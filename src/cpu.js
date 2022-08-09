@@ -27,7 +27,7 @@ const MEMORY_START = 0x200;
 const MEMORY_END = 0xE9F;
 
 let CPU = {
-  PauseFlag: false,
+  RunFlag: false,
   StepCycles: 0,
   // 硬件
   Delay_Timer: 0,
@@ -48,32 +48,32 @@ let CPU = {
     this.FileBufferArray = array;
   },
   async run(callback) {
-    let self = this;
-    this.PauseFlag = false;
-    let running = true;
-    while (running) {
+    // 避免同一时间执行两个run函数
+    if (this.isRuning) {
+      return;
+    }
+    this.isRuning = true;
+    this.nextStep = true;
+    while (this.nextStep) {
       for (let i = 0; i < CLOCK_NUMBER; i++) {
         await this.next();
       }
       this.Display.clearCtx();
       this.Display.render();
       callback && callback();
-      running = await clock_frame();
+      await clock_frame();
     }
+    this.isRuning = false;
     function clock_frame() {
-      return new Promise((next) => {
-        if (self.PauseFlag) {
-          next(false);
-        } else {
-          setTimeout(() => {
-            next(true);
-          }, 1000 / TIMER_SPEED);
-        }
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve();
+        }, 1000 / TIMER_SPEED);
       });
     }
   },
   stop() {
-    this.PauseFlag = true;
+    this.nextStep = false;
   },
   reset() {
     this.Delay_Timer = 0;
@@ -83,6 +83,9 @@ let CPU = {
     this.Register_I = 0;
     this.V_Array = new Array(16).fill(0);
     this.FileBufferArray = new Array(MEMORY_END - MEMORY_START + 1).fill(0);
+
+    this.PauseFlag = false;
+    this.StepCycles = 0;
   },
   async manual_next() {
     await this.next();
@@ -112,7 +115,7 @@ let CPU = {
     if (result) {
       let { type, param } = result;
       // console.log(`${to0X(memory_index)} tpye ${Instruction[type].msg}, ${JSON.stringify(param.map(x => to0X(x)))}`)
-      await this.excute(type, param);
+      await this.execute(type, param);
     } else {
       throw (new Error("读取不出指令"));
     }
@@ -144,7 +147,7 @@ let CPU = {
     }
     return result;
   },
-  async excute(type, param) {
+  async execute(type, param) {
     await Instruction[type].done.apply(this, param);
     this.Program_Counter += 2;
   },

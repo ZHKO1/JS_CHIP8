@@ -129,15 +129,22 @@
         updateProgramCounter();
         dumpMemory();
       }
+      let thread = null;
       const loadRom = rom =>
         fetch(`roms/${rom}`)
           .then(i => i.arrayBuffer())
-          .then(buffer => {
+          .then(async (buffer) => {
+            chip8.stop();            
+            await new Promise((next) => {
+              setTimeout(() => {
+                next();
+              }, 1000);
+            })
             chip8.reset();
             const uint8View = new Uint8Array(buffer)
             chip8.read(uint8View);
             running = true;
-            runButton.innerHTML = "Start";
+            runButton.innerHTML = "Stop";
             chip8.run(() => {
               updateDebuggerMsg();
             });
