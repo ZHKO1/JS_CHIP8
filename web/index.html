@@ -247,7 +247,6 @@
       }
       document.onkeyup = (e) => {
         let key = e.key;
-        console.log(key);
         for (let _0xKey in KeyboardMap) {
           if (KeyboardMap[_0xKey] == key) {
             chip8.keyUp(parseInt(_0xKey, 16));

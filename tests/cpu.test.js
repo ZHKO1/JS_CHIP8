@@ -26,7 +26,7 @@ let mockDisplay = {
 }
 
 
-describe('👀 SCREENSHOTS are correct', function () {
+describe('👀 Instruction are correct', function () {
   before(async function () {
   });
 
@@ -41,6 +41,7 @@ describe('👀 SCREENSHOTS are correct', function () {
 
   });
 
+  // refer https://github.com/taniarascia/chip8
   describe('test rom', function () {
     let cpu;
     beforeEach(async function () {
