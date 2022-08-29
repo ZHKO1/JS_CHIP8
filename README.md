@@ -1,6 +1,6 @@
 # JS-CHIP8
 A Chip-8 emulator written in JavaScript.  
-Try it here: https://js-chip-8.vercel.app
+Try it here: https://js-chip8.netlify.app
 
 ## Usage
 The simplest way to set up the emulator is the following code:
